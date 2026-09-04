@@ -26,6 +26,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      - name: Reproduce per-file TypeScript declaration ordering
+        run: pnpm reproduce:tsc-order
       - name: Generate declarations with TypeScript
         run: pnpm exec tsc --rootDir src --outDir tsc-dist --pretty false
       - name: Print TypeScript declaration

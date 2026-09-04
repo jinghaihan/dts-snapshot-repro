@@ -5,7 +5,8 @@
   "packageManager": "pnpm@11.25.0",
   "scripts": {
     "build": "tsdown",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "reproduce:tsc-order": "node scripts/reproduce-tsc-order.mjs"
   },
   "devDependencies": {
     "@typescript/native-preview": "7.0.0-dev.20260707.2",

@@ -26,7 +26,8 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
-      - run: pnpm build
+      - name: Generate declaration without snapshot validation
+        run: pnpm exec tsdown -c tsdown.no-snapshot.config.ts
       - name: Print generated declaration
         run: cat dist/index.d.mts
         shell: bash
@@ -34,10 +35,13 @@ jobs:
         with:
           name: dts-${{ matrix.os }}
           path: dist/index.d.mts
+      - name: Run API snapshot validation
+        run: pnpm build
 
   compare:
     name: Compare declarations
     needs: build
+    if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/download-artifact@v4

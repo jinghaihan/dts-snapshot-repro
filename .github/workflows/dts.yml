@@ -1,0 +1,55 @@
+name: DTS snapshot reproducibility
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm build
+      - name: Print generated declaration
+        run: cat dist/index.d.mts
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dts-${{ matrix.os }}
+          path: dist/index.d.mts
+
+  compare:
+    name: Compare declarations
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: dts-*
+          path: artifacts
+          merge-multiple: false
+      - name: Show hashes and differences
+        shell: bash
+        run: |
+          find artifacts -type f -print0 | sort -z | xargs -0 sha256sum
+          for file in artifacts/*/index.d.mts; do
+            echo "--- $file"
+            cat "$file"
+          done

@@ -26,6 +26,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm typecheck
+      - name: Generate declarations with TypeScript
+        run: pnpm exec tsc --rootDir src --outDir tsc-dist --pretty false
+      - name: Print TypeScript declaration
+        run: cat tsc-dist/core/image.d.ts
+        shell: bash
+      - uses: actions/upload-artifact@v4
+        with:
+          name: tsc-${{ matrix.os }}
+          path: tsc-dist/core/image.d.ts
       - name: Generate declaration without snapshot validation
         run: pnpm exec tsdown -c tsdown.no-snapshot.config.ts
       - name: Print generated declaration
@@ -49,11 +58,21 @@ jobs:
           pattern: dts-*
           path: artifacts
           merge-multiple: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: tsc-*
+          path: tsc-artifacts
+          merge-multiple: false
       - name: Show hashes and differences
         shell: bash
         run: |
           find artifacts -type f -print0 | sort -z | xargs -0 sha256sum
+          find tsc-artifacts -type f -print0 | sort -z | xargs -0 sha256sum
           for file in artifacts/*/index.d.mts; do
+            echo "--- $file"
+            cat "$file"
+          done
+          for file in tsc-artifacts/*/image.d.ts; do
             echo "--- $file"
             cat "$file"
           done
